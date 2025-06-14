@@ -9,3 +9,5 @@ wikipedia
 pydantic
 datetime
 json
+Flask
+flask-socketio
