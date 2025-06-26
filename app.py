@@ -1,38 +1,34 @@
-import os
-from flask import Flask, render_template
-from flask_socketio import SocketIO, emit
-import chatbot  # your chatbot module
+# app.py
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
-socketio = SocketIO(app, cors_allowed_origins="*")
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from chatbot import handle_query, append_to_history
+import uvicorn
 
-# Load chat history once at startup
-chat_history = chatbot.load_chat_history()
+app = FastAPI(title="GPTBETS AI Service")
 
-@socketio.on('connect')
-def on_connect():
-    emit('chat_response', {'msg': 'Welcome to GPT Bets Ai Assistant, How can I help you?.'})
-    # Save greeting to history
-    chatbot.append_to_history(chat_history, 'assistant', 'Welcome! Ask me about sports.')
+class ChatPayload(BaseModel):
+    user_id: str
+    new_message: str
+    history: list  # list of {"role":..., "content":..., "timestamp":...}
 
-@socketio.on('user_message')
-def handle_user_message(data):
-    user_text = data.get('msg', '')
-    # Append user message to history
-    chatbot.append_to_history(chat_history, 'user', user_text)
+class ChatResponse(BaseModel):
+    response: str
+    updated_history: list
 
-    # Get bot response
-    response = chatbot.handle_query(chat_history, user_text)
+@app.post("/chatbot", response_model=ChatResponse)
+def chat_endpoint(payload: ChatPayload):
+    # validate
+    if not payload.new_message or not isinstance(payload.history, list):
+        raise HTTPException(400, "Invalid payload")
+    # append user
+    history = payload.history.copy()
+    append_to_history(history, "user", payload.new_message)
+    # get bot reply
+    reply = handle_query(history, payload.new_message)
+    # append assistant
+    append_to_history(history, "assistant", reply)
+    return ChatResponse(response=reply, updated_history=history)
 
-    # Append bot response to history
-    chatbot.append_to_history(chat_history, 'assistant', response)
-
-    emit('chat_response', {'msg': response})
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000)

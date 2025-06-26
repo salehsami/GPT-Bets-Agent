@@ -1,14 +1,8 @@
-langchain
-langchain-openai
-langchain-community==0.2.12
-langchain.tools
 requests
 python-dotenv
-tavily-python==0.5.0
-wikipedia 
 pydantic
 datetime
-Flask
-flask-socketio
 gunicorn
-types-Flask-SocketIO
+openai
+fastapi
+uvicorn

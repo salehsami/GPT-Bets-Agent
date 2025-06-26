@@ -12,52 +12,20 @@ load_dotenv()
 # ─────────────── Environment & Initialization ───────────────
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
-    print("[Error] Missing OPENAI_API_KEY in environment")
-    exit(1)
+    raise RuntimeError("[Error] Missing OPENAI API KEY in environment")
 
 odds_api = OddsAPI(api_key=os.getenv("ODDS_API_KEY"), region="us")
 if not odds_api.api_key:
-    print("[Error] Missing ODDS_API_KEY in environment")
-    exit(1)
-
-# Where we’ll persist chat history between runs:
-CHAT_HISTORY_FILE = "chat_history.json"
+    raise RuntimeError("[Error] Missing ODDS API KEY in environment")
 
 
-def load_chat_history():
-    """
-    Load chat history from disk if it exists; otherwise return an empty list.
-    We store each turn as {"role": "user"/"assistant", "content": "...", "timestamp": "..."}.
-    """
-    if os.path.isfile(CHAT_HISTORY_FILE):
-        try:
-            with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return data
-        except Exception:
-            pass
-    return []
-
-
-def save_chat_history(history):
-    """Save the list of message dicts back to CHAT_HISTORY_FILE."""
-    try:
-        with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"[Warning] Failed to save chat history: {e}")
-
-
+# ────────── History Helpers ──────────
 def append_to_history(history, role, content):
-    """Helper to append a single message (with timestamp) to the in-memory list."""
-    entry = {
+    history.append({
         "role": role,
         "content": content,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
-    history.append(entry)
-    save_chat_history(history)
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    })
 
 
 # ─────────────── Intent + Sport Detection ───────────────
@@ -152,7 +120,7 @@ def format_answer_with_gpt(chat_history, data, user_query):
     messages = [{"role": "system", "content": system_prompt}]
 
     # Trim history to last few turns to avoid token overflow
-    max_turns = 6
+    max_turns = 20
     trimmed = (
         chat_history[-max_turns:] if len(chat_history) > max_turns else chat_history
     )
@@ -224,28 +192,3 @@ def handle_query(chat_history, user_input):
 
     return format_answer_with_gpt(chat_history, api_data, user_input)
 
-
-# ─────────────── Interactive Loop ───────────────
-if __name__ == "__main__":
-    print("SportsBot is ready! (type 'exit' or 'quit' to stop)")
-    chat_history = load_chat_history()
-
-    while True:
-        try:
-            user_input = input("\nYou: ").strip()
-            if not user_input:
-                continue
-            if user_input.lower() in ["exit", "quit"]:
-                print("GPTBETS AI signing off. Catch you next time! 👋")
-                break
-
-            append_to_history(chat_history, "user", user_input)
-            response = handle_query(chat_history, user_input)
-            print(f"\nGPTBETS AI: {response}")
-            append_to_history(chat_history, "assistant", response)
-        except KeyboardInterrupt:
-            print("\nGPTBETS AI signing off. Catch you next time! 👋")
-            break
-        except Exception as err:
-            print(f"[Error] Unexpected error in main loop: {err}")
-            break
