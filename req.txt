@@ -1,0 +1,8 @@
+requests
+python-dotenv
+pydantic
+datetime
+gunicorn
+openai
+fastapi
+uvicorn
