@@ -140,15 +140,15 @@ def format_answer_with_gpt(chat_history, data, user_query):
     messages.append({"role": "user", "content": combined})
 
     try:
-        resp = openai.responses.create(
-            model="gpt-5",
-            input=messages,
+        resp = openai.chat.completions.create(
+            model="gpt-5-mini",
+            messages=messages,
             # max_completion_tokens=4000,
         )
-        return resp.output_text.strip()
+        return resp.choices[0].message.content
     except Exception as e:
-        print(f"[Error] OpenAI API call failed: {e}")
-        return "⚠️ Sorry, I had trouble fetching insights. Try again."
+        return f"[Error] OpenAI API call failed: {e}"
+        # return "⚠️ Sorry, I had trouble fetching insights. Try again."
 
 
 # ─────────────── Main Handler ───────────────
