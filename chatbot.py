@@ -6,6 +6,7 @@ from datetime import datetime
 from sports_api import OddsAPI
 import openai
 from dotenv import load_dotenv
+import random
 
 load_dotenv()
 
@@ -187,9 +188,37 @@ def handle_query(chat_history, user_input):
 
     intent, sport_key = detect_intent_and_sport(user_input)
 
+    greeting_prompts = [
+        "Hey there! I can tell you about scores, upcoming matches, betting odds, or general sports info. What would you like to know?",
+        "Hey, welcome to GPTBETS AI — odds first, edge second. Ready to beat the book?",
+        "Hi there! GPTBETS AI here — name the matchup and I’ll bring the number and the angle.",
+        "Hey! GPTBETS AI checking in — best price on the board, explained in seconds.",
+        "Welcome! GPTBETS AI — misprices don’t last, so let’s circle them together.",
+        "Hey friend! GPTBETS AI — spread, moneyline, total—and a quick why.",
+        "Yo! GPTBETS AI here — live lines in, sharp takeaway out.",
+        "Hey there! GPTBETS AI — the edge is in the number. Let’s find it.",
+        "Hi! GPTBETS AI at your service — clean lines, short notes, optional lean.",
+        "Hey! GPTBETS AI here — give me the game and I’ll bring the +EV shot.",
+        "Welcome in! GPTBETS AI — I compare books and flag the best number for you.",
+        "Hey there! GPTBETS AI — key numbers win weeks, and I’ll highlight them.",
+        "Yo, welcome! GPTBETS AI — quick board, clear edge, no fluff.",
+        "Hey! GPTBETS AI here — if there’s value, I’ll make it obvious.",
+        "Hi there! GPTBETS AI — smart odds, sharper angles. What’s the matchup?",
+        "Hey, good to see you! GPTBETS AI — I line up the books so you can take the best.",
+        "Hello! GPTBETS AI — totals, spreads, moneylines—served fast and skimmable.",
+        "Hey there! GPTBETS AI — props only when they make sense, and when the player’s live.",
+        "Hi! GPTBETS AI here — tight parlay legs, not hope.",
+        "Hey, welcome back! GPTBETS AI — your side, my numbers—let’s make it make sense.",
+        "Hi there! GPTBETS AI — numbers don’t lie, and I’ll show where they pay.",
+        "Yo! GPTBETS AI — I keep it simple: the bet, the price, the reason.",
+        "Hey! GPTBETS AI — the board, decoded. What are we playing?",
+        "Hi! GPTBETS AI — I show the lines, you make the call.",
+        "Hey there! GPTBETS AI — fast odds, one-line context, done.",
+        "Hi friend! GPTBETS AI — sharp angles without the noise.",
+    ]
+
     if intent == "greeting":
-        return "Hey there! I can tell you about scores, upcoming matches, betting odds, or general sports info. What would you like to know?"
-        # return "Hey there! What do you want to know about Sports"
+        return random.choice(greeting_prompts)        # return "Hey there! What do you want to know about Sports"
 
     # General query if no sport_key
     if not sport_key:
@@ -227,6 +256,7 @@ def handle_query(chat_history, user_input):
         }
 
     return format_answer_with_gpt(chat_history, api_data, user_input)
+
 
 
 
